@@ -26,7 +26,7 @@ async function getSheet(sheet) {
   return parsed;
 }
 module.exports = async function handler(req,res){
-  res.setHeader('Cache-Control','public, s-maxage=60, stale-while-revalidate=60');
+  res.setHeader('Cache-Control','public, s-maxage=15');
   res.setHeader('Content-Type','application/json; charset=utf-8');
   if(req.method!=='GET')return res.status(405).end(JSON.stringify({error:'Method not allowed'}));
   try{
