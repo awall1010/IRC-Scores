@@ -3,3 +3,11 @@
 /* Display the official IRC badge at its original proportions without modifying its artwork. */
 .site-header .brand img{width:78px;max-height:88px;object-fit:contain}
 .footer-row img{max-width:72px;max-height:86px;object-fit:contain}
+
+/* Original regional crests, without edits to the supplied artwork. */
+.team-crest{width:34px;height:42px;object-fit:contain;flex-shrink:0;display:block}
+.team .team-icon{width:34px;height:42px}
+.standing-team{display:inline-flex;align-items:center;gap:8px;min-width:0;text-align:left}
+.standing-team .team-crest{width:28px;height:34px}
+.standing-team .team-icon{width:28px;height:34px}
+@media(max-width:520px){.team-crest{width:28px;height:36px}.team .team-icon{width:28px;height:36px}.standing-team .team-crest{width:25px;height:30px}}
