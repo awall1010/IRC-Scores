@@ -1,0 +1,3 @@
+const test=require('node:test');const assert=require('node:assert/strict');const {parseCSV}=require('../api/data');
+test('parses quoted fields, embedded commas and blank score fields',()=>{const rows=parseCSV('GameID,Home,Away,HomeScore,AwayScore,Notes\nG01,West,Canada,,,"Game, delayed"\nG02,"A ""United""",B,2,1,\n');assert.equal(rows.length,2);assert.equal(rows[0].Notes,'Game, delayed');assert.equal(rows[0].HomeScore,'');assert.equal(rows[1].Home,'A "United"');assert.equal(rows[1].AwayScore,'1')});
+test('accepts CRLF and byte order mark',()=>{const r=parseCSV('\uFEFFDivision,Team\r\nGU14,West\r\n');assert.equal(r[0].Division,'GU14')});

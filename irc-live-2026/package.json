@@ -1,0 +1,8 @@
+{
+  "name": "international-rush-cup-live-2026",
+  "version": "1.0.0",
+  "private": true,
+  "description": "International Rush Cup schedule, scores and standings from the official Google Sheet",
+  "scripts": {"test": "node --test tests/*.test.js"},
+  "engines": {"node": ">=20"}
+}
