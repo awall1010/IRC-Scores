@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "description": "International Rush Cup schedule, scores and standings from the official Google Sheet",
-  "scripts": {"test": "node --test tests/*.test.js"},
-  "engines": {"node": ">=20"}
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
 }
