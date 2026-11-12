@@ -3,6 +3,8 @@
 const DIVISIONS=['BU13','BU14','BU15','GU13','GU14','GU15'];
 const DAYS=['FRI','SAT','SUN'];
 const state={payload:null,day:'ALL',division:'ALL',status:'ALL',query:'',view:'schedule',standDivision:'BU13',lastError:null,loading:false};
+// Vercel Web Analytics uses a global queue on static HTML sites; do not send search terms or personal data.
+function trackInteraction(name,data){if(typeof window.va==='function')window.va('event',{name,...(data?{data}:{})});}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const setting=k=>(state.payload?.settings||[]).find(r=>r.Setting===k)?.Value||'';
@@ -44,6 +46,63 @@ function updateMeta(){const s=state.payload?.settings||[];if(!s.length)return;co
 function renderStatus(){const mark=$('live-mark');mark.className='live-mark'+(state.lastError?' error':state.payload?' ok':'');$('status-text').textContent=state.lastError?'Connection issue · Scores may be unavailable':state.payload?'Connected to official tournament data':'Connecting to tournament data';if(state.payload){const d=new Date(state.payload.fetchedAt||Date.now());$('updated-at').textContent=`Checked ${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;}else $('updated-at').textContent='';$('refresh').disabled=state.loading;$('refresh').textContent=state.loading?'Refreshing…':'↻ Refresh'}
 function render(){renderStatus();updateMeta();renderMatches();renderStandings()}
 async function refresh(){if(state.loading)return;state.loading=true;renderStatus();try{const response=await fetch('/api/data',{cache:'no-store'}),body=await response.json();if(!response.ok)throw Error(body.detail||body.error||'Unable to load Google Sheet');if(!Array.isArray(body.games)||!Array.isArray(body.teams))throw Error('Unexpected response data');state.payload=body;state.lastError=null}catch(error){state.lastError=error.message;console.error('IRC refresh:',error)}finally{state.loading=false;render()}}
-function init(){document.querySelectorAll('[data-day]').forEach(b=>b.addEventListener('click',()=>{state.day=b.dataset.day;document.querySelectorAll('[data-day]').forEach(n=>n.classList.toggle('active',n===b));renderMatches()}));document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(n=>{n.classList.toggle('active',n===b);n.setAttribute('aria-selected',String(n===b))});$('schedule-view').hidden=state.view!=='schedule';$('standings-view').hidden=state.view!=='standings'}));$('team-search').addEventListener('input',e=>{state.query=e.target.value.trim().toLowerCase();renderMatches()});$('division-select').addEventListener('change',e=>{state.division=e.target.value;renderMatches()});$('status-select').addEventListener('change',e=>{state.status=e.target.value;renderMatches()});$('stand-division-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-stand-division]');if(b){state.standDivision=b.dataset.standDivision;renderStandings()}});$('refresh').addEventListener('click',refresh);refresh();setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()})}
+function init(){
+  document.querySelectorAll('[data-day]').forEach(b=>b.addEventListener('click',()=>{
+    const next=b.dataset.day;
+    if(state.day!==next)trackInteraction('Day Selected',{day:next});
+    state.day=next;
+    document.querySelectorAll('[data-day]').forEach(n=>n.classList.toggle('active',n===b));
+    renderMatches();
+  }));
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
+    const next=b.dataset.view;
+    if(state.view!==next&&next==='standings')trackInteraction('Standings Viewed',{division:state.standDivision});
+    state.view=next;
+    document.querySelectorAll('[data-view]').forEach(n=>{n.classList.toggle('active',n===b);n.setAttribute('aria-selected',String(n===b))});
+    $('schedule-view').hidden=state.view!=='schedule';
+    $('standings-view').hidden=state.view!=='standings';
+  }));
+  // One anonymous event per settled search, never the entered search text.
+  let searchTimer=null,lastTrackedSearch='';
+  $('team-search').addEventListener('input',e=>{
+    state.query=e.target.value.trim().toLowerCase();
+    renderMatches();
+    if(searchTimer!==null)clearTimeout(searchTimer);
+    if(state.query.length<2){if(!state.query)lastTrackedSearch='';return}
+    searchTimer=setTimeout(()=>{
+      if(state.query.length>=2&&state.query!==lastTrackedSearch){
+        trackInteraction('Team Searched');
+        lastTrackedSearch=state.query;
+      }
+      searchTimer=null;
+    },900);
+  });
+  $('division-select').addEventListener('change',e=>{
+    const next=e.target.value;
+    if(state.division!==next)trackInteraction('Division Selected',{division:next,view:'schedule'});
+    state.division=next;renderMatches();
+  });
+  $('status-select').addEventListener('change',e=>{
+    const next=e.target.value;
+    if(state.status!==next)trackInteraction('Status Filtered',{status:next});
+    state.status=next;renderMatches();
+  });
+  $('stand-division-tabs').addEventListener('click',e=>{
+    const b=e.target.closest('[data-stand-division]');
+    if(b){
+      const next=b.dataset.standDivision;
+      if(state.standDivision!==next)trackInteraction('Division Selected',{division:next,view:'standings'});
+      state.standDivision=next;renderStandings();
+    }
+  });
+  $('refresh').addEventListener('click',()=>{
+    if(!state.loading)trackInteraction('Score Refreshed');
+    refresh();
+  });
+  refresh();
+  // Automatic polling and returning to the tab are intentionally not tracked as interactions.
+  setInterval(()=>{if(!document.hidden)refresh()},60000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+}
 init();
 })();
