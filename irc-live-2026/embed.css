@@ -1,0 +1,27 @@
+:root{color-scheme:light;--navy:#071a2f;--blue:#2268b1;--sky:#64b1f2;--line:#d4e3f0}
+*{box-sizing:border-box}
+body{margin:0;background:transparent;font-family:Inter,Arial,sans-serif;color:#102d4a}
+.irc-embed{max-width:1180px;margin:0 auto;padding:14px 12px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-radius:9px 9px 0 0;color:#fff;background:repeating-linear-gradient(130deg,#071a2f 0 60px,#0d2e52 60px 75px,#123d6a 75px 118px);border-bottom:4px solid var(--sky)}
+.identity{display:flex;align-items:center;gap:15px;min-width:0}.identity img{width:58px;height:64px;object-fit:contain}
+.eyebrow{margin:0 0 4px;color:#91c7f7;font-size:10px;letter-spacing:1.7px;font-weight:900}
+h1{margin:0;font-family:Impact,'Arial Narrow',sans-serif;font-size:clamp(25px,4vw,38px);line-height:1;letter-spacing:.5px;text-transform:uppercase}
+.live-pill{color:#bde2ff;border:1px solid #5a9dcf;background:#082746;padding:9px 12px;border-radius:4px;font-size:11px;font-weight:800;white-space:nowrap}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#46d7a5;margin-right:4px}
+.subhead{padding:12px 17px;background:#e8f2fa;display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:700;color:#365c7e}
+.match-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:#f2f7fc;padding:14px;border:1px solid var(--line)}
+.match{min-width:0;background:white;border:1px solid #d4e2ee;border-radius:7px;overflow:hidden;box-shadow:0 5px 16px rgba(8,35,63,.055)}
+.match:before{content:'';display:block;height:4px;background:repeating-linear-gradient(125deg,#071a2f 0 25px,#267bc3 25px 46px,#071a2f 46px 68px)}
+.match-head,.match-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:#f0f6fc}
+.division{background:#15568d;color:white;border-radius:3px;padding:4px 8px;font-weight:900;font-size:12px}.state{color:#788ca1;text-transform:uppercase;font-size:10px;font-weight:900}.state.live{color:#07865a}.state.final{color:#1b66a5}
+.side{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 12px}.side:first-of-type{padding-top:13px}.side:nth-last-of-type(2){padding-bottom:13px}
+.club{display:flex;align-items:center;min-width:0;gap:8px;font-size:13px;font-weight:800}.club span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crest{width:27px;height:35px;object-fit:contain;flex-shrink:0}.fallback{width:27px;height:35px;display:grid;place-items:center;background:#e7f0fa;border-radius:4px;color:#1d5e96;font-size:16px;flex-shrink:0}
+.score{font-size:20px;font-variant-numeric:tabular-nums;background:#0b2b4d;color:white;min-width:35px;text-align:center;padding:4px 5px;border-radius:4px}
+.match-foot{border-top:1px solid #e4ecf4;color:#607d98;font-size:11px;font-weight:800}
+.full-cta{display:flex;align-items:center;justify-content:center;gap:25px;padding:18px 24px;background:linear-gradient(100deg,#092543,#216eae);color:#fff;text-decoration:none;font-size:clamp(14px,2vw,19px);font-weight:900;letter-spacing:.7px;text-align:center;border-radius:0 0 9px 9px;box-shadow:0 9px 20px rgba(8,42,79,.15)}
+.full-cta:hover{background:linear-gradient(100deg,#0a315c,#3186c6)}.full-cta:focus-visible{outline:3px solid #5fb7ff;outline-offset:2px}
+.full-cta span:last-child{font-size:25px}
+.disclaimer{margin:10px 2px;color:#7891aa;text-align:right;font-size:10px}.notice{grid-column:1/-1;text-align:center;padding:30px;color:#4d6a86;background:white;border:1px dashed #c9dbea;border-radius:7px}
+@media(max-width:900px){.match-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.irc-embed{padding:8px 4px}.top{padding:12px}.identity{gap:10px}.identity img{width:46px;height:53px}.eyebrow{font-size:8px;letter-spacing:.9px}h1{font-size:25px}.live-pill{display:none}.subhead{padding:10px;font-size:11px;flex-wrap:wrap}.match-grid{grid-template-columns:1fr;gap:9px;padding:10px}.full-cta{font-size:14px;padding:17px 12px}.disclaimer{text-align:center}}
