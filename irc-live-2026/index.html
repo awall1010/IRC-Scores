@@ -14,7 +14,7 @@
 </head>
 <body>
 <header class="site-header"><div class="shell header-wrap"><div class="brand"><img src="/assets/irc-logo.png" alt="Official International Rush Cup logo"/><div class="brand-rule"></div><div class="brand-label">INTERNATIONAL<br/><b>RUSH CUP</b></div></div><div class="header-right"><div class="year-label">2026 TOURNAMENT</div></div></div></header>
-<section class="hero"><div class="shell hero-inside"><div class="hero-copy"><div class="eyebrow"><span class="mini-dot"></span> RUSH SOCCER • TOURNAMENT CENTER</div><h1>THE GAME.<br/><span>IN REAL TIME.</span></h1><p>Every fixture. Every result. One place to follow the International Rush Cup.</p><div class="hero-tags"><span id="hero-date">2026 INTERNATIONAL RUSH CUP</span><span id="hero-venue">SCHEDULE & STANDINGS</span></div></div><div class="hero-decor" aria-hidden="true"><span>IRC</span><div class="circle-a"></div><div class="circle-b"></div></div></div></section>
+<section class="hero"><div class="shell hero-inside"><div class="hero-copy"><div class="eyebrow"><span class="mini-dot"></span> RUSH SOCCER • TOURNAMENT CENTER</div><h1>THE GAME.<br/><span>IN REAL TIME.</span></h1><p>Every fixture. Every result. One place to follow the International Rush Cup.</p><div class="hero-tags"><span id="hero-date">2026 INTERNATIONAL RUSH CUP</span><span id="hero-venue">SCHEDULE & STANDINGS</span></div><button type="button" id="field-map-open" class="field-map-cta" aria-haspopup="dialog"><span class="field-map-cta-icon" aria-hidden="true">⌖</span><span><strong>VIEW FIELD MAP</strong><small>Find your field · November 20–22</small></span><span class="field-map-cta-arrow" aria-hidden="true">↗</span></button></div><div class="hero-decor" aria-hidden="true"><span>IRC</span><div class="circle-a"></div><div class="circle-b"></div></div></div></section>
 <main class="shell main"><div id="announcement" class="announcement" hidden></div><div class="live-bar"><div class="live-left"><span class="live-mark" id="live-mark"></span><span id="status-text">Connecting to tournament data</span></div><div class="live-right"><span id="updated-at"></span><button id="refresh" class="ghost-btn" type="button" aria-label="Refresh scores now">↻ Refresh</button></div></div>
 <div class="page-head"><div><p class="kicker">MATCH CENTER</p><h2>Follow the action</h2></div><p class="page-sub">Find your team, follow scores and track the standings.</p></div>
 <div class="tabs" role="tablist" aria-label="Tournament views"><button class="tab active" data-view="schedule" role="tab" aria-selected="true">Schedule & Results</button><button class="tab" data-view="standings" role="tab" aria-selected="false">Standings</button><button class="tab" data-view="history" role="tab" aria-selected="false">All-time Champions</button></div>
@@ -26,5 +26,21 @@
 </section>
 <section id="history-view" hidden aria-label="International Rush Cup historical championship leaderboard"></section>
 <div class="info-bottom"><div class="info-icon">ⓘ</div><div><strong>For players, families & coaches</strong><p>Schedules, fields, and scores are managed by tournament staff. Updates should appear within about one minute after changes are entered into the official Google Sheet.</p></div></div>
-</main><footer><div class="shell footer-row"><img src="/assets/irc-logo.png" alt="International Rush Cup"/><p>International Rush Cup 2026 · Powered by the Rush community</p></div></footer>
+</main><dialog id="field-map-dialog" class="field-map-dialog" aria-labelledby="field-map-title">
+<div class="field-map-modal-top"><div><p>INTERNATIONAL RUSH CUP 2026</p><h2 id="field-map-title">Field Map · Nov 20–22</h2></div><button id="field-map-close" type="button" aria-label="Close field map">✕</button></div>
+<div class="field-map-image-wrap"><img src="/assets/irc-field-map.png" alt="Rush Cup 2026 field layout showing numbered fields and surrounding site features." /></div>
+<div class="field-map-modal-actions"><a href="/assets/irc-field-map.png" target="_blank" rel="noopener noreferrer">Open full-size field map ↗</a><button type="button" id="field-map-done">Back to scores</button></div>
+</dialog>
+<script>
+(() => {
+  const dialog=document.getElementById('field-map-dialog');
+  const trigger=document.getElementById('field-map-open');
+  const close=()=>dialog.close();
+  trigger.addEventListener('click',()=>{if(typeof dialog.showModal==='function')dialog.showModal();else window.open('/assets/irc-field-map.png','_blank','noopener');});
+  document.getElementById('field-map-close').addEventListener('click',close);
+  document.getElementById('field-map-done').addEventListener('click',close);
+  dialog.addEventListener('click',event=>{if(event.target===dialog)close();});
+})();
+</script>
+<footer><div class="shell footer-row"><img src="/assets/irc-logo.png" alt="International Rush Cup"/><p>International Rush Cup 2026 · Powered by the Rush community</p></div></footer>
 </body></html>

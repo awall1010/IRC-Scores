@@ -278,3 +278,25 @@ footer{background:#071a2f;border-top:4px solid #2169af}
 .history-source a{color:#175e9f;text-decoration:underline}
 @media(max-width:800px){.history-grid{grid-template-columns:1fr}.tabs .tab{font-size:16px;padding-left:14px;padding-right:14px}}
 @media(max-width:520px){.tabs{gap:0}.tabs .tab{font-size:13px;letter-spacing:0;padding:13px 6px}.profile-header{padding:20px 15px;gap:13px}.profile-header>.team-crest{width:60px;height:76px}.profile-header h3{font-size:35px}.profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-stats b{font-size:30px}.history-intro{padding:28px 19px}.history-region{padding:13px;gap:10px}.history-rank{font-size:25px;min-width:28px}.history-region-logo{width:39px}.history-region-logo .team-crest{width:37px;height:47px}}
+
+/* Field map access — prominent on first screen; source image remains unchanged. */
+.field-map-cta{display:flex;align-items:center;gap:17px;margin-top:30px;min-height:90px;padding:16px 22px;background:linear-gradient(105deg,#f5c84e,#ffd975);color:#0c2947;border:3px solid #ffe9a9;border-radius:8px;box-shadow:0 14px 35px rgba(0,0,0,.25);width:min(100%,470px);font:inherit;cursor:pointer;text-align:left;transition:transform .15s ease,box-shadow .15s ease}
+.field-map-cta:hover{transform:translateY(-2px);box-shadow:0 19px 35px rgba(0,0,0,.32)}
+.field-map-cta:focus-visible{outline:3px solid white;outline-offset:4px}
+.field-map-cta-icon{font-size:38px;line-height:1;flex:0 0 42px;text-align:center}
+.field-map-cta strong{display:block;font:800 29px/1.05 'Barlow Condensed',Impact,sans-serif;letter-spacing:1.1px}
+.field-map-cta small{display:block;margin-top:5px;font-size:12px;font-weight:800;letter-spacing:.1px}
+.field-map-cta-arrow{margin-left:auto;font-size:28px;font-weight:900}
+.field-map-dialog{border:0;padding:0;border-radius:12px;width:min(1100px,calc(100% - 28px));max-height:calc(100dvh - 28px);background:#f5f9fd;color:#102d4a;box-shadow:0 30px 85px rgba(0,0,0,.45);overflow:auto}
+.field-map-dialog::backdrop{background:rgba(2,13,29,.88)}
+.field-map-modal-top{background:#071a2f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:20px 24px;gap:16px}
+.field-map-modal-top p{font-size:10px;font-weight:800;letter-spacing:2px;color:#9acbff;margin:0 0 4px}
+.field-map-modal-top h2{font:800 clamp(25px,3.8vw,42px)/1 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;margin:0}
+#field-map-close{font-size:23px;color:#fff;background:#244e77;border:1px solid #5d87af;width:47px;height:47px;border-radius:5px}
+.field-map-image-wrap{display:flex;justify-content:center;padding:12px;background:#fff}
+.field-map-image-wrap img{display:block;width:100%;height:auto;max-height:72dvh;object-fit:contain}
+.field-map-modal-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;background:#edf5fb}
+.field-map-modal-actions a,.field-map-modal-actions button{font:800 13px Inter,Arial,sans-serif;border-radius:5px;padding:13px 16px;border:0;text-decoration:none}
+.field-map-modal-actions a{background:#155f9b;color:white}.field-map-modal-actions button{background:#d8e9f7;color:#0d3458}
+@media(max-width:520px){.field-map-cta{min-height:78px;padding:12px 15px;gap:9px;margin-top:23px}.field-map-cta-icon{font-size:29px;flex-basis:32px}.field-map-cta strong{font-size:24px}.field-map-cta small{font-size:10px}.field-map-dialog{width:calc(100% - 14px);max-height:calc(100dvh - 14px)}.field-map-modal-top{padding:15px}.field-map-modal-actions{flex-direction:column;align-items:stretch}.field-map-modal-actions a,.field-map-modal-actions button{text-align:center}.field-map-image-wrap{padding:5px}}
+@media(prefers-reduced-motion:reduce){.field-map-cta{transition:none}.field-map-cta:hover{transform:none}}
