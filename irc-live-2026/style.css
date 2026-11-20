@@ -227,3 +227,54 @@ footer{background:#071a2f;border-top:4px solid #2169af}
  .match-card{transition:none}
  .match-card:hover{transform:none}
 }
+
+
+/* IRC team pages and historical championship tracker */
+.team-link{font:inherit;font-weight:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;line-height:inherit}
+.team-link:hover{color:#2376bd;text-decoration:underline;text-underline-offset:3px}
+.team-link:focus-visible{outline:3px solid #69bfff;outline-offset:3px;border-radius:2px}
+.team-name.team-link{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}
+.standings-link{font-weight:800;white-space:nowrap}
+#team-view,#history-view{padding:16px 0 30px}
+#team-view[hidden],#history-view[hidden]{display:none}
+.profile-back{background:#e6f2fb;border:1px solid #b9d4ec;color:#174d7c;font-size:13px;font-weight:800;border-radius:5px;padding:12px 18px;margin:10px 0 20px;cursor:pointer}
+.profile-back:hover{background:#cfe7f8}
+.profile-header{background:linear-gradient(115deg,#071a2f,#1a5d97);border-radius:9px;color:white;display:flex;align-items:center;gap:24px;padding:28px 32px;margin:0 0 16px;min-height:136px}
+.profile-header>.team-crest{width:80px;height:100px;object-fit:contain}
+.profile-header>.team-icon{width:80px;height:88px;font-size:38px;display:grid;place-items:center;background:#d8eafa;color:#164779;border-radius:8px}
+.profile-header .kicker{color:#a3d5ff}
+.profile-header h3{font:800 clamp(36px,5vw,56px)/.98 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;margin:6px 0}
+.profile-header p:last-child{font-size:13px;color:#c6def2;margin:0}
+.profile-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0 30px}
+.profile-stats>div{border:1px solid #ccdfef;background:white;border-radius:7px;padding:18px 16px;display:flex;flex-direction:column;gap:2px;align-items:center}
+.profile-stats b{font:800 35px/1 'Barlow Condensed',Impact,sans-serif;color:#0c3c67}
+.profile-stats span{font-size:11px;font-weight:800;letter-spacing:1px;color:#5d7993}
+#team-profile h4{font:800 32px/1.1 'Barlow Condensed',Impact,sans-serif;color:#0c2b4c;margin:28px 0 15px;text-transform:uppercase}
+#team-profile h4 span{font:700 13px Inter,Arial,sans-serif;text-transform:none;color:#6b849d;margin-left:12px}
+.profile-highlight{background:#dceeff!important;box-shadow:inset 4px 0 0 #2268b1}
+.history-intro{background:linear-gradient(118deg,#071a2f,#174d7b);padding:34px 32px;border-radius:9px;color:white;margin:10px 0 24px;position:relative;overflow:hidden}
+.history-intro:after{content:"";position:absolute;right:-45px;top:0;bottom:0;width:44%;background:repeating-linear-gradient(130deg,transparent 0 35px,rgba(34,104,177,.45) 35px 53px,transparent 53px 82px);pointer-events:none}
+.history-intro .kicker{color:#87c9ff}
+.history-intro h3{font:800 clamp(39px,6vw,65px)/.95 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;position:relative;z-index:1;margin:9px 0}
+.history-intro p:last-child{color:#c1ddf3;font-size:13px;position:relative;z-index:1}
+.history-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.history-region{display:flex;align-items:center;gap:15px;padding:18px 20px;border-radius:8px;background:white;border:1px solid #cbddeb;box-shadow:0 6px 19px rgba(12,48,89,.06)}
+.history-rank{font:800 32px/.9 'Barlow Condensed',Impact,sans-serif;color:#7d9dbb;min-width:37px}
+.history-region-logo{width:50px;display:flex;justify-content:center;align-items:center}
+.history-region-logo .team-crest{width:43px;height:57px;object-fit:contain}
+.history-region-logo .team-icon,.history-fallback{width:43px;height:53px;display:grid;place-items:center;background:#e6f1fa;color:#115489;font-size:16px;font-weight:900;border-radius:5px}
+.history-region-info{flex:1;min-width:0}
+.history-region-info strong{display:block;font-size:15px;color:#0b2949;margin-bottom:9px}
+.history-meter{height:7px;border-radius:8px;background:#e3eff9;overflow:hidden}
+.history-meter span{display:block;height:100%;background:linear-gradient(90deg,#174d82,#3f97de);border-radius:8px}
+.history-total{text-align:right;min-width:58px}
+.history-total strong{font:800 39px/.85 'Barlow Condensed',Impact,sans-serif;color:#14588e;display:block}
+.history-total span{font-size:9px;font-weight:900;color:#738ca3;letter-spacing:1px}
+.history-years{margin-top:30px;background:white;border:1px solid #cbddeb;border-radius:8px;overflow:hidden}
+.history-years h3{margin:0;padding:19px 24px;background:#092543;color:white;font:800 27px 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase}
+.history-years .stand-table th:first-child,.history-years .stand-table td:first-child{text-align:left;padding-left:20px}
+.history-years .stand-table{min-width:690px}
+.history-source{font-size:12px;color:#718aa2;margin:17px 2px}
+.history-source a{color:#175e9f;text-decoration:underline}
+@media(max-width:800px){.history-grid{grid-template-columns:1fr}.tabs .tab{font-size:16px;padding-left:14px;padding-right:14px}}
+@media(max-width:520px){.tabs{gap:0}.tabs .tab{font-size:13px;letter-spacing:0;padding:13px 6px}.profile-header{padding:20px 15px;gap:13px}.profile-header>.team-crest{width:60px;height:76px}.profile-header h3{font-size:35px}.profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-stats b{font-size:30px}.history-intro{padding:28px 19px}.history-region{padding:13px;gap:10px}.history-rank{font-size:25px;min-width:28px}.history-region-logo{width:39px}.history-region-logo .team-crest{width:37px;height:47px}}
