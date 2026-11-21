@@ -118,6 +118,102 @@ function resolveProfileDivision(team,rawDivision){
  const matches=ds.filter(d=>(state.payload?.teams||[]).some(x=>x.Division===d&&x.Team===team));
  return matches.length===1?matches[0]:null;
 }
+
+/*
+ * Conservative points-only qualification outlook:
+ * - Explore every win/draw/loss combination for unplayed GROUP matches.
+ * - Two or more teams sharing the highest points are NEVER called qualified.
+ * - Finalist must be #1 in the division, or #1 in their BU13 pool.
+ * - Official tiebreak priority is unconfirmed in the source Settings sheet.
+ * This feature intentionally does not model goal margins or unofficial tie resolution.
+ */
+function advancementOutlook(team,division,pool){
+ const rules=setting('Tiebreakers');
+ const rulesUnconfirmed=/PLACEHOLDER|confirm|pending/i.test((state.payload?.settings||[]).find(x=>x.Setting==='Tiebreakers')?.['What it does']||'');
+ const table=standings(division,pool),me=table.find(r=>r.team===team);
+ if(!me)return '';
+ const games=subMatches(division,pool);
+ const remaining=games.filter(g=>status(g)!=='Final'&&status(g)!=='Cancelled');
+ const myGames=remaining.filter(g=>g.Home===team||g.Away===team);
+ const maxPoints=me.pts+myGames.length*pointValue('Points for a win',3);
+ const leader=table[0];
+ const teams=table.map(x=>x.team);
+ const points=table.map(x=>x.pts);
+ const idx=new Map(teams.map((name,i)=>[name,i]));
+ const win=pointValue('Points for a win',3),draw=pointValue('Points for a draw',1);
+ const firstGame=myGames[0];
+ let analysis={win:{out:0,tie:0,first:0},draw:{out:0,tie:0,first:0},loss:{out:0,tie:0,first:0}};
+ let overall={out:0,tie:0,first:0},evaluated=0;
+ // Exhaustive points-only enumeration, bounded to avoid blocking the browser.
+ const enumerable=remaining.length<=11;
+ if(enumerable){
+   function walk(n,pick){
+     if(n===remaining.length){
+       const top=Math.max(...points),mine=points[idx.get(team)];
+       const result=mine===top?(points.filter(p=>p===top).length===1?'first':'tie'):'out';
+       overall[result]++;evaluated++;
+       if(firstGame)analysis[pick][result]++;
+       return;
+     }
+     const game=remaining[n],h=idx.get(game.Home),a=idx.get(game.Away);
+     if(h===undefined||a===undefined){walk(n+1,pick);return;}
+     for(const [hp,ap,what] of [[win,0,'win'],[draw,draw,'draw'],[0,win,'loss']]){
+       points[h]+=hp;points[a]+=ap;
+       const myChoice=game===firstGame?(game.Home===team?what:(what==='win'?'loss':what==='loss'?'win':'draw')):pick;
+       walk(n+1,myChoice);
+       points[h]-=hp;points[a]-=ap;
+     }
+   }
+   walk(0,null);
+ }
+ const stateText=a=>{
+   if(!a||a.first+a.tie+a.out===0)return 'Not available';
+   if(a.first>0&&a.tie===0&&a.out===0)return 'Finishes 1st on points';
+   if(a.first===0&&a.tie>0&&a.out===0)return 'Tied for 1st · tiebreak needed';
+   if(a.first===0&&a.tie===0)return 'Cannot finish 1st';
+   if(a.out===0)return 'At least tied for 1st';
+   if(a.first===0&&a.tie>0)return 'Needs a tiebreak and other results';
+   return 'Can finish 1st · other results matter';
+ };
+ let verdict='',tone='watch';
+ if(!remaining.length){
+   verdict=table.filter(x=>x.pts===leader.pts).length>1&&me.pts===leader.pts?
+     'Tied for the top on points — official tiebreak needed':
+     me.pts===leader.pts?'Top of the group on points':'Group play finished · not top on points';
+   tone=me.pts===leader.pts?'strong':'quiet';
+ }else if(enumerable){
+   if(overall.first>0&&overall.out===0&&overall.tie===0){verdict='Final spot secured on points';tone='strong';}
+   else if(overall.first===0&&overall.tie===0){verdict='Cannot finish first on points';tone='quiet';}
+   else if(overall.out===0&&overall.first===0){verdict='Can finish tied for first · tiebreak required';}
+   else if(overall.out===0){verdict='Guaranteed at least a tie for first on points';tone='strong';}
+   else if(overall.first>0){verdict='Still in contention for the final';}
+   else {verdict='Needs results and a tiebreak to advance';}
+ }else verdict='Final qualification depends on remaining group results';
+ const rivals=table.filter(x=>x.team!==team).slice().sort((a,b)=>{
+   const ax=a.pts+remaining.filter(g=>g.Home===a.team||g.Away===a.team).length*win;
+   const bx=b.pts+remaining.filter(g=>g.Home===b.team||g.Away===b.team).length*win;
+   return bx-ax;
+ }).slice(0,3);
+ const future=remaining.filter(g=>g.Home!==team&&g.Away!==team).slice(0,3);
+ const pointsNeeded=Math.max(0,leader.pts-me.pts);
+ const heading=pool?'Pool '+pool+' winner advances to BU13 final':'1st place advances to the division final';
+ const scenario=firstGame&&enumerable?'<div class="advance-scenarios"><p class="advance-subtitle">Your next match: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p><div class="advance-outcomes">'+
+   [['win','Win'],['draw','Draw'],['loss','Loss']].map(([k,label])=>'<div><span class="outcome-tag '+k+'">'+label+'</span><strong>'+esc(stateText(analysis[k]))+'</strong></div>').join('')+'</div></div>':
+ firstGame?'<p class="advance-subtitle">Next: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p>':'';
+ const rivalsHtml=rivals.length?'<div class="advance-rivals"><p class="advance-subtitle">Teams to watch</p><div class="advance-rival-grid">'+rivals.map(t=>{
+   const left=remaining.filter(g=>g.Home===t.team||g.Away===t.team).length;
+   return '<div><strong>'+esc(t.team)+'</strong><span>'+t.pts+' pts · '+left+' group '+(left===1?'match':'matches')+' left</span></div>';
+ }).join('')+'</div></div>':'';
+ const watch=future.length?'<p class="advance-watch">Other relevant group games: '+future.map(g=>esc(g.Home)+' vs '+esc(g.Away)).join(' · ')+'</p>':'';
+ return '<section class="advancement-panel"><div class="advancement-head"><div><p class="kicker">ROAD TO THE FINAL</p><h4>Advancement outlook</h4></div><span class="advance-label">POINTS-BASED SCENARIOS</span></div>'+
+ '<div class="advancement-body"><div class="advance-verdict '+tone+'">'+esc(verdict)+'</div>'+
+ '<p class="advance-description">'+esc(heading)+'. '+esc(team)+' currently has <strong>'+me.pts+' points</strong> with <strong>'+myGames.length+'</strong> group '+(myGames.length===1?'match':'matches')+' remaining; maximum <strong>'+maxPoints+' points</strong>.</p>'+
+ scenario+rivalsHtml+watch+
+ '<details class="advance-rules"><summary>How do tiebreakers work?</summary><p>Group games award '+win+' points for a win, '+draw+' for a draw and zero for a loss. Standings currently use the working order <strong>'+esc(rules||'PTS, H2H, GD, GA, GF')+'</strong> (points, head-to-head, goal differential, goals against, goals for). <strong>This order is provisional and has not been confirmed by tournament staff.</strong> Head-to-head for multi-team ties and any goal caps also need confirmation.</p></details>'+
+ '<p class="advance-caution">Scenarios check win/draw/loss points combinations for remaining group matches, not exact scorelines. Any tie for first remains undecided until official tiebreakers are applied. Standings and final placements must be confirmed by tournament staff.</p>'+
+ '</div></section>';
+}
+
 function renderTeamProfile(){
  const profile=state.selectedTeam;
  if(!profile||!state.payload)return;
@@ -138,6 +234,7 @@ function renderTeamProfile(){
  $('team-profile').innerHTML=
  '<div class="profile-header">'+teamIcon(team)+'<div><p class="kicker">TEAM CENTER · '+esc(division||'CROSSOVER')+(pool?' · POOL '+esc(pool):'')+'</p><h3>'+esc(team)+'</h3><p>All matches, results, and group position</p></div></div>'+
  '<div class="profile-stats"><div><b>'+profileGames.length+'</b><span>MATCHES</span></div><div><b>'+(record?record.w:'—')+'</b><span>WINS</span></div><div><b>'+(record?record.pts:'—')+'</b><span>POINTS</span></div><div><b>'+(rank?'#'+rank:'—')+'</b><span>GROUP RANK</span></div></div>'+
+ advancementOutlook(team,division,pool)+
  '<h4>Team schedule & results</h4><div class="match-grid">'+(profileGames.length?profileGames.map(gameHtml).join(''):'<div class="empty-state">No fixtures currently listed for this team.</div>')+'</div>'+
  '<h4>Group standings '+(division?'<span>'+esc(division)+(pool?' · Pool '+esc(pool):'')+'</span>':'')+'</h4>'+
  (table.length?'<div class="stand-card"><div class="table-scroll"><table class="stand-table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>PTS</th></tr></thead><tbody>'+table.map((t,i)=>'<tr class="'+(t.team===team?'profile-highlight':'')+'"><td>'+(i+1)+'</td><td>'+esc(t.team)+'</td><td>'+t.p+'</td><td>'+t.w+'</td><td>'+t.d+'</td><td>'+t.l+'</td><td>'+t.gf+'</td><td>'+t.ga+'</td><td>'+t.gd+'</td><td>'+t.pts+'</td></tr>').join('')+'</tbody></table></div></div>':'<p>Group standings will appear after team information is available.</p>')+
