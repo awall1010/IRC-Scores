@@ -143,7 +143,9 @@ function advancementOutlook(team,division,pool){
  const win=pointValue('Points for a win',3),draw=pointValue('Points for a draw',1);
  const firstGame=myGames[0];
  let analysis={win:{out:0,tie:0,first:0},draw:{out:0,tie:0,first:0},loss:{out:0,tie:0,first:0}};
- let overall={out:0,tie:0,first:0},evaluated=0;
+ let overall={out:0,tie:0,first:0};
+ const winningPaths={win:new Map(),draw:new Map(),loss:new Map()};
+ const chosen=Array(remaining.length).fill(null);
  // Exhaustive points-only enumeration, bounded to avoid blocking the browser.
  const enumerable=remaining.length<=11;
  if(enumerable){
@@ -154,21 +156,52 @@ function advancementOutlook(team,division,pool){
        const level=points.filter(p=>p===mine).length;
        // Team is through on points if every possible tiebreak position still qualifies.
        const result=ahead>=qualifyingSlots?'out':ahead+level<=qualifyingSlots?'first':'tie';
-       overall[result]++;evaluated++;
-       if(firstGame)analysis[pick][result]++;
+       overall[result]++;
+       if(firstGame){
+         analysis[pick][result]++;
+         if(result==='first'){
+           for(let j=0;j<remaining.length;j++){
+             if(remaining[j]===firstGame)continue;
+             const key=remaining[j].GameID;
+             if(!winningPaths[pick].has(key))winningPaths[pick].set(key,new Set());
+             winningPaths[pick].get(key).add(chosen[j]);
+           }
+         }
+       }
        return;
      }
      const game=remaining[n],h=idx.get(game.Home),a=idx.get(game.Away);
      if(h===undefined||a===undefined){walk(n+1,pick);return;}
      for(const [hp,ap,what] of [[win,0,'win'],[draw,draw,'draw'],[0,win,'loss']]){
        points[h]+=hp;points[a]+=ap;
+       chosen[n]=what;
        const myChoice=game===firstGame?(game.Home===team?what:(what==='win'?'loss':what==='loss'?'win':'draw')):pick;
        walk(n+1,myChoice);
        points[h]-=hp;points[a]-=ap;
+       chosen[n]=null;
      }
    }
    walk(0,null);
  }
+ const requiredOthers=pick=>{
+   if(!analysis[pick]?.first)return '';
+   const conditions=[];
+   for(const g of remaining){
+     if(g===firstGame)continue;
+     const outcomes=winningPaths[pick].get(g.GameID);
+     if(!outcomes||outcomes.size===3)continue;
+     let text='';
+     const home=esc(g.Home),away=esc(g.Away);
+     if(outcomes.size===1){
+       const only=[...outcomes][0];
+       text=only==='win'?home+' must beat '+away:only==='loss'?away+' must beat '+home:home+' and '+away+' must draw';
+     }else if(outcomes.has('win')&&outcomes.has('draw'))text=home+' must avoid losing to '+away;
+     else if(outcomes.has('loss')&&outcomes.has('draw'))text=away+' must avoid losing to '+home;
+     else text=home+' vs '+away+' must not be a draw';
+     conditions.push(text);
+   }
+   return conditions.length?'<span class="advance-required">Other result'+(conditions.length===1?'':'s')+' needed: '+conditions.slice(0,3).join('; ')+(conditions.length>3?'; plus additional results':'')+'</span>':'';
+ };
  const stateText=a=>{
    if(!a||a.first+a.tie+a.out===0)return 'Not available';
    if(a.first>0&&a.tie===0&&a.out===0)return 'Qualifies on points';
@@ -201,7 +234,7 @@ function advancementOutlook(team,division,pool){
  const future=remaining.filter(g=>g.Home!==team&&g.Away!==team).slice(0,3);
  const heading=qualifyingSlots===1?'Pool '+pool+' winner advances to the BU13 final':'Top two teams advance to the '+division+' final';
  const scenario=firstGame&&enumerable?'<div class="advance-scenarios"><p class="advance-subtitle">Your next match: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p><div class="advance-outcomes">'+
-   [['win','Win'],['draw','Draw'],['loss','Loss']].map(([k,label])=>'<div><span class="outcome-tag '+k+'">'+label+'</span><strong>'+esc(stateText(analysis[k]))+'</strong></div>').join('')+'</div></div>':
+   [['win','Win'],['draw','Draw'],['loss','Loss']].map(([k,label])=>'<div><span class="outcome-tag '+k+'">'+label+'</span><strong>'+esc(stateText(analysis[k]))+'</strong>'+requiredOthers(k)+'</div>').join('')+'</div></div>':
  firstGame?'<p class="advance-subtitle">Next: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p>':'';
  const rivalsHtml=rivals.length?'<div class="advance-rivals"><p class="advance-subtitle">Teams to watch</p><div class="advance-rival-grid">'+rivals.map(t=>{
    const left=remaining.filter(g=>g.Home===t.team||g.Away===t.team).length;
