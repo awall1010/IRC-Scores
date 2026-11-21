@@ -45,7 +45,42 @@ const REGION_LOGOS=Object.freeze({
   international:'/assets/team-logos/international.png'
 });
 function teamIcon(team){const label=String(team||'').trim(),key=label.toLowerCase(),src=REGION_LOGOS[key];return src?`<img class="team-crest" src="${src}" alt="${esc(label)} regional crest" loading="lazy" decoding="async"/>`:`<span class="team-icon" aria-hidden="true">${esc(nameInitial(label))}</span>`}
-function gameHtml(g){const s=shownStatus(g),home=resolvedTeam(g.Home,g.Division),away=resolvedTeam(g.Away,g.Division),scored=hasScore(g),hs=int(g.HomeScore),as=int(g.AwayScore),winHome=scored&&hs>as,winAway=scored&&as>hs;const live=s==='Live';return `<article class="match-card"><div class="card-top"><div class="card-left"><span class="division-pill">${esc(g.Division)}</span><span class="match-round">${esc(g.Round||'Group')} · ${esc(g.GameID)}</span></div><span class="game-state ${s.toLowerCase()}">${live?'● ':''}${esc(s)}</span></div><div class="card-body"><div class="teams"><div class="team">${teamIcon(home)}<button type="button" class="team-name team-link" data-team="${esc(home)}" data-team-division="${esc(g.Division)}" title="View ${esc(home)} schedule and standings">${esc(home)}</button></div><div class="team">${teamIcon(away)}<button type="button" class="team-name team-link" data-team="${esc(away)}" data-team-division="${esc(g.Division)}" title="View ${esc(away)} schedule and standings">${esc(away)}</button></div></div><div class="scores ${scored?'':'empty'}"><span class="${winHome?'winner':''}">${scored?hs:'—'}</span><span class="${winAway?'winner':''}">${scored?as:'—'}</span></div></div><div class="card-foot"><span>◷ ${esc(g.Time||'TBD')}</span><span>⌖ ${esc(g.Field||'Field TBD')}</span></div>${g.Notes?`<p class="match-note">${esc(g.Notes)}</p>`:''}</article>`}
+function gameHtml(g){const featured=isGameOfDay(g),s=shownStatus(g),home=resolvedTeam(g.Home,g.Division),away=resolvedTeam(g.Away,g.Division),scored=hasScore(g),hs=int(g.HomeScore),as=int(g.AwayScore),winHome=scored&&hs>as,winAway=scored&&as>hs;const live=s==='Live';return `<article class="match-card${featured?' match-featured':''}"${featured?' id="irc-game-of-day"':''}>${featured?'<div class="featured-ribbon">★ GAME OF THE DAY · SATURDAY SHOWCASE</div>':''}<div class="card-top"><div class="card-left"><span class="division-pill">${esc(g.Division)}</span><span class="match-round">${esc(g.Round||'Group')} · ${esc(g.GameID)}</span></div><span class="game-state ${s.toLowerCase()}">${live?'● ':''}${esc(s)}</span></div><div class="card-body"><div class="teams"><div class="team">${teamIcon(home)}<button type="button" class="team-name team-link" data-team="${esc(home)}" data-team-division="${esc(g.Division)}" title="View ${esc(home)} schedule and standings">${esc(home)}</button></div><div class="team">${teamIcon(away)}<button type="button" class="team-name team-link" data-team="${esc(away)}" data-team-division="${esc(g.Division)}" title="View ${esc(away)} schedule and standings">${esc(away)}</button></div></div><div class="scores ${scored?'':'empty'}"><span class="${winHome?'winner':''}">${scored?hs:'—'}</span><span class="${winAway?'winner':''}">${scored?as:'—'}</span></div></div><div class="card-foot"><span>◷ ${esc(g.Time||'TBD')}</span><span>⌖ ${esc(g.Field||'Field TBD')}</span></div>${g.Notes?`<p class="match-note">${esc(g.Notes)}</p>`:''}</article>`}
+
+function isGameOfDay(g){
+  return defaultScheduleDay()==='SAT'&&g.GameID==='G44'&&g.Day==='SAT';
+}
+function renderGameOfDay(){
+  const banner=$('game-of-day-banner');
+  if(!banner)return;
+  const game=state.payload?.games?.find(g=>isGameOfDay(g));
+  if(!game){banner.hidden=true;banner.innerHTML='';return;}
+  const home=resolvedTeam(game.Home,game.Division),away=resolvedTeam(game.Away,game.Division);
+  const label=shownStatus(game);
+  const scored=hasScore(game);
+  const homeText=home==='South'?'South':home;
+  const awayText=away==='West'?'West':away;
+  banner.hidden=false;
+  banner.innerHTML=`<div class="spotlight-top"><span class="spotlight-eyebrow">★ RUSH SOCCER · SATURDAY SHOWCASE</span><span class="spotlight-label">GAME OF THE DAY</span></div>
+  <div class="spotlight-main">
+    <div class="spotlight-team">${teamIcon(home)}<strong>${esc(homeText)}</strong><span>SOUTH REGION</span></div>
+    <div class="spotlight-center"><div class="spotlight-vs">${scored?esc(game.HomeScore)+' – '+esc(game.AwayScore):'VS'}</div><div class="spotlight-details">${esc(game.Division)} · ${esc(game.Time)} ET</div><div class="spotlight-field">${esc(game.Field)}</div><span class="spotlight-status">${label==='Live'?'● ':''}${esc(label)}</span></div>
+    <div class="spotlight-team">${teamIcon(away)}<strong>${esc(awayText)}</strong><span>WEST REGION</span></div>
+  </div>
+  <div class="spotlight-bottom"><span>Two regions. One Saturday spotlight.</span><button type="button" id="spotlight-go">VIEW MATCH <span aria-hidden="true">↓</span></button></div>`;
+  $('spotlight-go').addEventListener('click',()=>{
+    // Always show the selected fixture, even if another schedule filter was in use.
+    showView('schedule');
+    state.day='SAT';state.division='GU15';state.status='ALL';state.query='';
+    $('team-search').value='';$('division-select').value='GU15';$('status-select').value='ALL';
+    document.querySelectorAll('[data-day]').forEach(b=>{
+      const active=b.dataset.day==='SAT';b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));
+    });
+    renderMatches();
+    $('irc-game-of-day')?.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+}
+
 function renderMatches(){if(!state.payload){$('matches').innerHTML=`<div class="empty-state"><h3>${state.lastError?'Could not load live schedule':'Loading the tournament schedule…'}</h3>${state.lastError?'Please confirm the sheet is publicly readable and try Refresh.':'Connecting to the official Google Sheet.'}</div>`;$('results-count').textContent='';return}
 const matches=state.payload.games.filter(g=>{const home=resolvedTeam(g.Home,g.Division),away=resolvedTeam(g.Away,g.Division);return(state.day==='ALL'||g.Day===state.day)&&(state.division==='ALL'||g.Division.split('/').includes(state.division))&&(state.status==='ALL'||status(g)===state.status)&&(!state.query||[home,away,g.Field,g.GameID,g.Division].join(' ').toLowerCase().includes(state.query))});$('results-count').textContent=`${matches.length} ${matches.length===1?'match':'matches'}`;
 if(!matches.length){$('matches').innerHTML='<div class="empty-state"><h3>No games found</h3>Try another team, division or day.</div>';return}
@@ -134,7 +169,7 @@ function showView(next){
 
 function updateMeta(){const s=state.payload?.settings||[];if(!s.length)return;const name=setting('Tournament name');if(name)document.title=`${name} | Live Center`;const date=setting('Dates'),venue=setting('Venue');$('hero-date').textContent=date||'INTERNATIONAL RUSH CUP 2026';$('hero-venue').textContent=venue||'SCHEDULE & STANDINGS';const a=setting('Announcement');$('announcement').hidden=!a;$('announcement').textContent=a;const d=$('division-select');const old=d.value;d.innerHTML='<option value="ALL">All divisions</option>'+DIVISIONS.map(x=>`<option value="${x}">${x}</option>`).join('');d.value=old}
 function renderStatus(){const mark=$('live-mark');mark.className='live-mark'+(state.lastError?' error':state.payload?' ok':'');$('status-text').textContent=state.lastError?'Connection issue · Scores may be unavailable':state.payload?'Connected to official tournament data':'Connecting to tournament data';if(state.payload){const d=new Date(state.payload.fetchedAt||Date.now());$('updated-at').textContent=`Checked ${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;}else $('updated-at').textContent='';$('refresh').disabled=state.loading;$('refresh').textContent=state.loading?'Refreshing…':'↻ Refresh'}
-function render(){renderStatus();updateMeta();renderMatches();renderStandings();renderTeamProfile()}
+function render(){renderStatus();updateMeta();renderMatches();renderStandings();renderTeamProfile();renderGameOfDay()}
 async function refresh(){if(state.loading)return;state.loading=true;renderStatus();try{const response=await fetch('/api/data',{cache:'no-store'}),body=await response.json();if(!response.ok)throw Error(body.detail||body.error||'Unable to load Google Sheet');if(!Array.isArray(body.games)||!Array.isArray(body.teams))throw Error('Unexpected response data');state.payload=body;state.lastError=null}catch(error){state.lastError=error.message;console.error('IRC refresh:',error)}finally{state.loading=false;render()}}
 function init(){
   // Keep the visible active button consistent with the initial date-based filter.
