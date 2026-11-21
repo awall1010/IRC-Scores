@@ -427,3 +427,8 @@ footer{background:#071a2f;border-top:4px solid #2169af}
  .advance-rival-grid{grid-template-columns:1fr}
  .advance-label{font-size:9px}
 }
+
+
+.advance-required{display:block;margin-top:3px;font-size:11px;font-weight:650;line-height:1.5;color:#355e81}
+.advance-outcomes>div{justify-content:flex-start}
+@media(max-width:650px){.advance-outcomes>div{flex-wrap:wrap}.advance-required{flex:1 0 100%;margin-top:0}.advance-outcomes strong{text-align:left;max-width:none}}
