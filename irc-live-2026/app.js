@@ -170,7 +170,7 @@ function advancementOutlook(team,division,pool){
      if(finalGuaranteed)bucket.guaranteedFinal++;
      if(low===high&&finalGuaranteed)bucket.unambiguousFinal=(bucket.unambiguousFinal||0)+1;
    }
-   if(next&&finalGuaranteed){
+   if(next&&finalPossible){
      const b=groups[pick];
      remaining.forEach((g,i)=>{
        if(g===next)return;
@@ -221,7 +221,7 @@ function advancementOutlook(team,division,pool){
    return 'Possible: '+formatPlaces([...b.slots]);
  };
  const conditionsText=b=>{
-   if(!b.guaranteedFinal||!next)return '';
+   if(!b.possibleFinal||!next)return '';
    const necessary=[];
    for(const g of remaining){
      if(g===next)continue;
@@ -235,7 +235,7 @@ function advancementOutlook(team,division,pool){
      else if(values.has('loss')&&values.has('draw'))necessary.push(away+' avoids losing to '+home);
      else necessary.push(home+' vs '+away+' does not end in a draw');
    }
-   return necessary.length?'<span class="advance-required">For a guaranteed final spot on points: '+necessary.slice(0,2).join('; ')+(necessary.length>2?'; plus other results':'')+'</span>':'';
+   return necessary.length?'<span class="advance-required">For a possible final path, you also need: '+necessary.slice(0,2).join('; ')+(necessary.length>2?'; plus other results':'')+'</span>':'';
  };
  const possible=[...allScenarios.slots];
  const rankedLabel=division==='BU13'?'Pool '+pool+' #1 → Final · #2 → 2nd-place matchup · #3 → 3rd-place matchup · #4 → 4th-place matchup':'#1–2 → Final · #3–4 → 3rd-place game · '+((division==='BU14'||division==='GU13')?'#5–6 → 5th-place game':division==='BU15'?'#5 → Friendly':'#5 → Placement crossover');
