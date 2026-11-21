@@ -321,3 +321,67 @@ footer{background:#071a2f;border-top:4px solid #2169af}
 .irc-feedback-submit:disabled{opacity:.65;cursor:progress}
 .irc-feedback-bot{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media(max-width:520px){.irc-feedback-button{right:12px;bottom:12px;padding:12px 14px;font-size:12px}.irc-feedback-head h2{font-size:25px}}
+
+
+/* 2026 IRC Game of the Day: G44, Saturday 5:30 PM.
+   Original Rush region crests used unchanged. Spotlight hidden after Saturday ET. */
+.game-of-day-banner[hidden]{display:none!important}
+.game-of-day-banner{
+  position:relative;isolation:isolate;overflow:hidden;margin:29px 0 8px;
+  border:2px solid #6bb9f1;border-radius:11px;color:white;
+  background:linear-gradient(115deg,#06172c 0%,#09335e 45%,#145b97 100%);
+  box-shadow:0 19px 44px rgba(3,34,66,.24);
+}
+.game-of-day-banner::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(130deg,transparent 0 34px,rgba(1,8,22,.26) 34px 55px,transparent 55px 92px);
+  mask-image:linear-gradient(90deg,transparent 10%,black 100%);
+}
+.game-of-day-banner::after{
+ content:"";position:absolute;inset:0 0 auto;height:7px;
+ background:repeating-linear-gradient(135deg,#78c7ff 0 34px,#0d3f76 34px 63px,#e2b94e 63px 75px);
+}
+.spotlight-top{padding:24px 33px 10px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.spotlight-eyebrow{color:#acd9ff;font-size:11px;font-weight:900;letter-spacing:2.6px}
+.spotlight-label{background:linear-gradient(105deg,#f4c84c,#ffe19b);color:#0b2a45;font:900 15px/1 Inter,Arial,sans-serif;letter-spacing:1.3px;padding:11px 14px;clip-path:polygon(0 0,100% 0,100% 78%,92% 100%,0 100%)}
+.spotlight-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(135px,.6fr) minmax(0,1fr);align-items:center;gap:17px;min-height:242px;padding:12px 26px 28px}
+.spotlight-team{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;text-align:center}
+.spotlight-team .team-crest{height:88px;width:92px;object-fit:contain;filter:drop-shadow(0 5px 10px rgba(0,0,0,.22))}
+.spotlight-team .team-icon{height:88px;width:88px;display:grid;place-items:center;font-size:36px;background:#dceaf6;color:#123d67}
+.spotlight-team strong{font:900 clamp(34px,5vw,64px)/.87 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;letter-spacing:.9px;color:#fff}
+.spotlight-team>span:last-child{font-size:10px;letter-spacing:2px;color:#a4cdeb;font-weight:900}
+.spotlight-center{text-align:center;border-left:1px solid rgba(156,210,254,.26);border-right:1px solid rgba(156,210,254,.26);padding:7px 10px}
+.spotlight-vs{font:900 clamp(47px,7vw,80px)/.9 'Barlow Condensed',Impact,sans-serif;letter-spacing:1px;color:#f8d46e;text-shadow:0 6px 15px rgba(0,0,0,.25)}
+.spotlight-details{font-weight:900;font-size:14px;color:#f4faff;margin-top:16px}
+.spotlight-field{font-size:12px;color:#bcdafa;font-weight:700;margin-top:7px}
+.spotlight-status{display:inline-block;margin-top:13px;padding:5px 10px;border:1px solid rgba(157,216,255,.42);background:rgba(1,11,25,.24);color:#b4e1ff;text-transform:uppercase;letter-spacing:1.2px;font-size:10px;font-weight:800}
+.spotlight-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 29px;background:rgba(0,10,23,.36);border-top:1px solid rgba(152,211,255,.25)}
+.spotlight-bottom>span{font-size:13px;color:#c1dafa;font-weight:700}
+#spotlight-go{border:0;background:#f4c84c;color:#082c4c;font-size:12px;font-weight:900;letter-spacing:.7px;padding:12px 19px;border-radius:4px;cursor:pointer}
+#spotlight-go:hover{background:#ffe49a}
+#spotlight-go:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.match-card.match-featured{border:2px solid #e6b547;background:linear-gradient(#fff,#fff);box-shadow:0 12px 28px rgba(10,51,96,.17)}
+.match-card.match-featured::before{background:repeating-linear-gradient(130deg,#092442 0 31px,#1d71ae 31px 51px,#ebc653 51px 63px)}
+.featured-ribbon{background:linear-gradient(100deg,#ebbe46,#ffe49a);color:#092b48;font:900 11px/1 Inter,Arial,sans-serif;letter-spacing:.8px;padding:11px 18px;text-align:center}
+.match-card.match-featured .team-name{font-weight:900}
+.match-card.match-featured .division-pill{background:#124b7b}
+@media(max-width:650px){
+ .game-of-day-banner{margin-top:19px}
+ .spotlight-top{padding:22px 14px 3px;gap:9px}
+ .spotlight-eyebrow{font-size:9px;letter-spacing:1.1px}
+ .spotlight-label{font-size:10px;padding:9px 10px}
+ .spotlight-main{grid-template-columns:minmax(0,1fr) minmax(88px,.72fr) minmax(0,1fr);gap:4px;padding:20px 8px 22px;min-height:195px}
+ .spotlight-team{gap:8px}
+ .spotlight-team .team-crest{height:63px;width:67px}
+ .spotlight-team .team-icon{height:62px;width:62px;font-size:27px}
+ .spotlight-team strong{font-size:clamp(27px,8vw,42px)}
+ .spotlight-team>span:last-child{font-size:8px;letter-spacing:.8px}
+ .spotlight-center{padding:6px 3px}
+ .spotlight-vs{font-size:clamp(34px,10vw,52px)}
+ .spotlight-details{font-size:10px;margin-top:10px}
+ .spotlight-field{font-size:10px;margin-top:5px}
+ .spotlight-status{font-size:8px;padding:5px 6px}
+ .spotlight-bottom{padding:12px 13px;gap:8px}
+ .spotlight-bottom>span{font-size:10px}
+ #spotlight-go{font-size:10px;padding:11px 9px;white-space:nowrap}
+}
