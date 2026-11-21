@@ -300,3 +300,24 @@ footer{background:#071a2f;border-top:4px solid #2169af}
 .field-map-modal-actions a{background:#155f9b;color:white}.field-map-modal-actions button{background:#d8e9f7;color:#0d3458}
 @media(max-width:520px){.field-map-cta{min-height:78px;padding:12px 15px;gap:9px;margin-top:23px}.field-map-cta-icon{font-size:29px;flex-basis:32px}.field-map-cta strong{font-size:24px}.field-map-cta small{font-size:10px}.field-map-dialog{width:calc(100% - 14px);max-height:calc(100dvh - 14px)}.field-map-modal-top{padding:15px}.field-map-modal-actions{flex-direction:column;align-items:stretch}.field-map-modal-actions a,.field-map-modal-actions button{text-align:center}.field-map-image-wrap{padding:5px}}
 @media(prefers-reduced-motion:reduce){.field-map-cta{transition:none}.field-map-cta:hover{transform:none}}
+
+/* Small, accessible IRC feedback control. No Google Sheet details are exposed to browsers. */
+.irc-feedback-button{position:fixed;right:19px;bottom:19px;z-index:50;display:flex;align-items:center;gap:8px;padding:13px 18px;border-radius:999px;background:#f5c84e;color:#092a48;border:2px solid #fff;font:800 13px Inter,Arial,sans-serif;box-shadow:0 9px 28px rgba(4,21,40,.32);cursor:pointer}
+.irc-feedback-button:hover{background:#ffe18b}
+.irc-feedback-button:focus-visible,.irc-feedback-dialog button:focus-visible{outline:3px solid #7cc5ff;outline-offset:3px}
+.irc-feedback-dialog{width:min(460px,calc(100vw - 28px));max-height:calc(100dvh - 28px);border:0;border-radius:12px;padding:0;background:#fff;color:#123452;box-shadow:0 28px 70px rgba(0,0,0,.4)}
+.irc-feedback-dialog::backdrop{background:rgba(4,18,35,.70)}
+.irc-feedback-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(120deg,#071a2f,#1f69a8);padding:21px 23px;color:#fff}
+.irc-feedback-head p{font-size:10px;letter-spacing:1.8px;color:#afdcff;margin:0 0 7px;font-weight:800}
+.irc-feedback-head h2{font:800 29px/1 'Barlow Condensed',Impact,sans-serif;margin:0}
+#feedback-close{background:#174a78;border:1px solid #7ca9cf;color:#fff;width:38px;height:38px;border-radius:5px;cursor:pointer}
+.irc-feedback-form{padding:23px;display:flex;flex-direction:column;gap:12px}
+.irc-feedback-form label{font-weight:800;font-size:15px}
+.irc-feedback-form textarea{box-sizing:border-box;width:100%;min-height:140px;border:1px solid #b9d4e9;border-radius:7px;font:400 14px/1.5 Inter,Arial,sans-serif;padding:12px;resize:vertical}
+.irc-feedback-form textarea:focus{outline:3px solid #9ed5ff;border-color:#2169af}
+.irc-feedback-help{font-size:11px;color:#667f96;line-height:1.5;margin:0}
+#feedback-result{margin:0;font-size:12px;font-weight:750;min-height:1em}
+.irc-feedback-submit{border:0;border-radius:5px;background:#155c98;color:white;font-weight:800;font-size:14px;padding:15px;cursor:pointer}
+.irc-feedback-submit:disabled{opacity:.65;cursor:progress}
+.irc-feedback-bot{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+@media(max-width:520px){.irc-feedback-button{right:12px;bottom:12px;padding:12px 14px;font-size:12px}.irc-feedback-head h2{font-size:25px}}

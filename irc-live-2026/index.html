@@ -42,5 +42,44 @@
   dialog.addEventListener('click',event=>{if(event.target===dialog)close();});
 })();
 </script>
+<button id="feedback-open" class="irc-feedback-button" type="button" aria-haspopup="dialog" aria-controls="feedback-dialog"><span aria-hidden="true">✎</span> Let us know your thoughts</button>
+<dialog id="feedback-dialog" class="irc-feedback-dialog" aria-labelledby="feedback-title">
+  <div class="irc-feedback-head"><div><p>IRC LIVE CENTER</p><h2 id="feedback-title">Let us know your thoughts</h2></div><button type="button" id="feedback-close" aria-label="Close feedback">✕</button></div>
+  <form id="feedback-form" class="irc-feedback-form">
+    <label for="feedback-message">What do you have to share?</label>
+    <textarea id="feedback-message" rows="5" maxlength="1200" minlength="3" placeholder="Share your experience, ideas, or suggestions…" required></textarea>
+    <div class="irc-feedback-bot" aria-hidden="true"><label for="feedback-website">Website</label><input type="text" id="feedback-website" tabindex="-1" autocomplete="off"/></div>
+    <p class="irc-feedback-help">Anonymous feedback. Please don't include player names or private information.</p>
+    <p id="feedback-result" role="status" aria-live="polite"></p>
+    <button class="irc-feedback-submit" id="feedback-submit" type="submit">Submit feedback</button>
+  </form>
+</dialog>
+<script>
+(() => {
+  const dialog=document.getElementById('feedback-dialog');
+  const form=document.getElementById('feedback-form');
+  const result=document.getElementById('feedback-result');
+  const submit=document.getElementById('feedback-submit');
+  document.getElementById('feedback-open').addEventListener('click',()=>dialog.showModal());
+  document.getElementById('feedback-close').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
+  form.addEventListener('submit',async(e)=>{
+    e.preventDefault();
+    if(!form.reportValidity())return;
+    submit.disabled=true;submit.textContent='Sending…';result.textContent='';
+    try{
+      const resp=await fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        feedback:document.getElementById('feedback-message').value.trim(),
+        website:document.getElementById('feedback-website').value
+      })});
+      const data=await resp.json().catch(()=>({}));
+      if(!resp.ok||!data.ok)throw Error(data.message||'Feedback is temporarily unavailable.');
+      form.reset();result.textContent='Thank you! Your feedback has been received.';
+      submit.textContent='Sent!';
+    }catch(err){result.textContent=err.message||'Unable to send feedback. Please try again.';submit.textContent='Submit feedback';}
+    finally{submit.disabled=false}
+  });
+})();
+</script>
 <footer><div class="shell footer-row"><img src="/assets/irc-logo.png" alt="International Rush Cup"/><p>International Rush Cup 2026 · Powered by the Rush community</p></div></footer>
 </body></html>
