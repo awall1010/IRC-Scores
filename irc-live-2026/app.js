@@ -129,7 +129,6 @@ function resolveProfileDivision(team,rawDivision){
  */
 function advancementOutlook(team,division,pool){
  const rules=setting('Tiebreakers');
- const rulesUnconfirmed=/PLACEHOLDER|confirm|pending/i.test((state.payload?.settings||[]).find(x=>x.Setting==='Tiebreakers')?.['What it does']||'');
  const table=standings(division,pool),me=table.find(r=>r.team===team);
  if(!me)return '';
  const games=subMatches(division,pool);
@@ -139,6 +138,7 @@ function advancementOutlook(team,division,pool){
  const leader=table[0];
  const teams=table.map(x=>x.team);
  const points=table.map(x=>x.pts);
+ const qualifyingSlots=division==='BU13'&&pool?1:2;
  const idx=new Map(teams.map((name,i)=>[name,i]));
  const win=pointValue('Points for a win',3),draw=pointValue('Points for a draw',1);
  const firstGame=myGames[0];
@@ -149,8 +149,11 @@ function advancementOutlook(team,division,pool){
  if(enumerable){
    function walk(n,pick){
      if(n===remaining.length){
-       const top=Math.max(...points),mine=points[idx.get(team)];
-       const result=mine===top?(points.filter(p=>p===top).length===1?'first':'tie'):'out';
+       const mine=points[idx.get(team)];
+       const ahead=points.filter(p=>p>mine).length;
+       const level=points.filter(p=>p===mine).length;
+       // Team is through on points if every possible tiebreak position still qualifies.
+       const result=ahead>=qualifyingSlots?'out':ahead+level<=qualifyingSlots?'first':'tie';
        overall[result]++;evaluated++;
        if(firstGame)analysis[pick][result]++;
        return;
@@ -168,24 +171,25 @@ function advancementOutlook(team,division,pool){
  }
  const stateText=a=>{
    if(!a||a.first+a.tie+a.out===0)return 'Not available';
-   if(a.first>0&&a.tie===0&&a.out===0)return 'Finishes 1st on points';
-   if(a.first===0&&a.tie>0&&a.out===0)return 'Tied for 1st · tiebreak needed';
-   if(a.first===0&&a.tie===0)return 'Cannot finish 1st';
-   if(a.out===0)return 'At least tied for 1st';
+   if(a.first>0&&a.tie===0&&a.out===0)return 'Qualifies on points';
+   if(a.first===0&&a.tie>0&&a.out===0)return 'Tied at cutoff · tiebreak needed';
+   if(a.first===0&&a.tie===0)return 'Cannot qualify on points';
+   if(a.out===0)return 'At least tied for a final spot';
    if(a.first===0&&a.tie>0)return 'Needs a tiebreak and other results';
-   return 'Can finish 1st · other results matter';
+   return 'Can qualify · other results matter';
  };
  let verdict='',tone='watch';
  if(!remaining.length){
-   verdict=table.filter(x=>x.pts===leader.pts).length>1&&me.pts===leader.pts?
-     'Tied for the top on points — official tiebreak needed':
-     me.pts===leader.pts?'Top of the group on points':'Group play finished · not top on points';
-   tone=me.pts===leader.pts?'strong':'quiet';
+   const ahead=table.filter(x=>x.pts>me.pts).length,level=table.filter(x=>x.pts===me.pts).length;
+   verdict=ahead>=qualifyingSlots?'Group play finished · outside final places on points':
+     ahead+level<=qualifyingSlots?'In a qualifying position on points':
+     'Tied at the qualification cutoff · official tiebreak needed';
+   tone=ahead+level<=qualifyingSlots?'strong':ahead>=qualifyingSlots?'quiet':'watch';
  }else if(enumerable){
    if(overall.first>0&&overall.out===0&&overall.tie===0){verdict='Final spot secured on points';tone='strong';}
-   else if(overall.first===0&&overall.tie===0){verdict='Cannot finish first on points';tone='quiet';}
-   else if(overall.out===0&&overall.first===0){verdict='Can finish tied for first · tiebreak required';}
-   else if(overall.out===0){verdict='Guaranteed at least a tie for first on points';tone='strong';}
+   else if(overall.first===0&&overall.tie===0){verdict='Cannot qualify on points';tone='quiet';}
+   else if(overall.out===0&&overall.first===0){verdict='Can finish tied at qualification cutoff';}
+   else if(overall.out===0){verdict='Guaranteed at least a tie for a final spot';tone='strong';}
    else if(overall.first>0){verdict='Still in contention for the final';}
    else {verdict='Needs results and a tiebreak to advance';}
  }else verdict='Final qualification depends on remaining group results';
@@ -195,8 +199,7 @@ function advancementOutlook(team,division,pool){
    return bx-ax;
  }).slice(0,3);
  const future=remaining.filter(g=>g.Home!==team&&g.Away!==team).slice(0,3);
- const pointsNeeded=Math.max(0,leader.pts-me.pts);
- const heading=pool?'Pool '+pool+' winner advances to BU13 final':'1st place advances to the division final';
+ const heading=qualifyingSlots===1?'Pool '+pool+' winner advances to the BU13 final':'Top two teams advance to the '+division+' final';
  const scenario=firstGame&&enumerable?'<div class="advance-scenarios"><p class="advance-subtitle">Your next match: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p><div class="advance-outcomes">'+
    [['win','Win'],['draw','Draw'],['loss','Loss']].map(([k,label])=>'<div><span class="outcome-tag '+k+'">'+label+'</span><strong>'+esc(stateText(analysis[k]))+'</strong></div>').join('')+'</div></div>':
  firstGame?'<p class="advance-subtitle">Next: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p>':'';
@@ -210,7 +213,7 @@ function advancementOutlook(team,division,pool){
  '<p class="advance-description">'+esc(heading)+'. '+esc(team)+' currently has <strong>'+me.pts+' points</strong> with <strong>'+myGames.length+'</strong> group '+(myGames.length===1?'match':'matches')+' remaining; maximum <strong>'+maxPoints+' points</strong>.</p>'+
  scenario+rivalsHtml+watch+
  '<details class="advance-rules"><summary>How do tiebreakers work?</summary><p>Group games award '+win+' points for a win, '+draw+' for a draw and zero for a loss. Standings currently use the working order <strong>'+esc(rules||'PTS, H2H, GD, GA, GF')+'</strong> (points, head-to-head, goal differential, goals against, goals for). <strong>This order is provisional and has not been confirmed by tournament staff.</strong> Head-to-head for multi-team ties and any goal caps also need confirmation.</p></details>'+
- '<p class="advance-caution">Scenarios check win/draw/loss points combinations for remaining group matches, not exact scorelines. Any tie for first remains undecided until official tiebreakers are applied. Standings and final placements must be confirmed by tournament staff.</p>'+
+ '<p class="advance-caution">Scenarios check win/draw/loss points combinations for remaining group matches, not exact scorelines. Any tie at the qualifying cutoff remains undecided until official tiebreakers are applied. Standings and final placements must be confirmed by tournament staff.</p>'+
  '</div></section>';
 }
 
