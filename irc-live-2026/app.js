@@ -2,7 +2,16 @@
 'use strict';
 const DIVISIONS=['BU13','BU14','BU15','GU13','GU14','GU15'];
 const DAYS=['FRI','SAT','SUN'];
-const state={payload:null,day:'ALL',division:'ALL',status:'ALL',query:'',view:'schedule',standDivision:'BU13',selectedTeam:null,lastError:null,loading:false};
+// Start with the tournament day in Eastern Time; outside the event show all fixtures.
+function defaultScheduleDay(now=new Date()){
+  const date=new Intl.DateTimeFormat('en-CA',{
+    timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(now);
+  const part=type=>date.find(p=>p.type===type)?.value;
+  const ymd=part('year')+'-'+part('month')+'-'+part('day');
+  return ({'2026-11-20':'FRI','2026-11-21':'SAT','2026-11-22':'SUN'})[ymd]||'ALL';
+}
+const state={payload:null,day:defaultScheduleDay(),division:'ALL',status:'ALL',query:'',view:'schedule',standDivision:'BU13',selectedTeam:null,lastError:null,loading:false};
 // Vercel Web Analytics uses a global queue on static HTML sites; do not send search terms or personal data.
 function trackInteraction(name,data){if(typeof window.va==='function')window.va('event',{name,...(data?{data}:{})});}
 const $=id=>document.getElementById(id);
@@ -128,11 +137,17 @@ function renderStatus(){const mark=$('live-mark');mark.className='live-mark'+(st
 function render(){renderStatus();updateMeta();renderMatches();renderStandings();renderTeamProfile()}
 async function refresh(){if(state.loading)return;state.loading=true;renderStatus();try{const response=await fetch('/api/data',{cache:'no-store'}),body=await response.json();if(!response.ok)throw Error(body.detail||body.error||'Unable to load Google Sheet');if(!Array.isArray(body.games)||!Array.isArray(body.teams))throw Error('Unexpected response data');state.payload=body;state.lastError=null}catch(error){state.lastError=error.message;console.error('IRC refresh:',error)}finally{state.loading=false;render()}}
 function init(){
+  // Keep the visible active button consistent with the initial date-based filter.
+  document.querySelectorAll('[data-day]').forEach(b=>{
+    const active=b.dataset.day===state.day;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-pressed',String(active));
+  });
   document.querySelectorAll('[data-day]').forEach(b=>b.addEventListener('click',()=>{
     const next=b.dataset.day;
     if(state.day!==next)trackInteraction('Day Selected',{day:next});
     state.day=next;
-    document.querySelectorAll('[data-day]').forEach(n=>n.classList.toggle('active',n===b));
+    document.querySelectorAll('[data-day]').forEach(n=>{const active=n===b;n.classList.toggle('active',active);n.setAttribute('aria-pressed',String(active))});
     renderMatches();
   }));
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
