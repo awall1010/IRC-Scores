@@ -128,128 +128,137 @@ function resolveProfileDivision(team,rawDivision){
  * This feature intentionally does not model goal margins or unofficial tie resolution.
  */
 function advancementOutlook(team,division,pool){
- const rules=setting('Tiebreakers');
- const table=standings(division,pool),me=table.find(r=>r.team===team);
+ const table=standings(division,pool);
+ const me=table.find(t=>t.team===team);
  if(!me)return '';
- const games=subMatches(division,pool);
- const remaining=games.filter(g=>status(g)!=='Final'&&status(g)!=='Cancelled');
- const myGames=remaining.filter(g=>g.Home===team||g.Away===team);
- const maxPoints=me.pts+myGames.length*pointValue('Points for a win',3);
- const leader=table[0];
- const teams=table.map(x=>x.team);
- const points=table.map(x=>x.pts);
- const qualifyingSlots=division==='BU13'&&pool?1:2;
- const idx=new Map(teams.map((name,i)=>[name,i]));
+ const all=subMatches(division,pool);
+ const remaining=all.filter(g=>status(g)!=='Final'&&status(g)!=='Cancelled');
+ const mine=remaining.filter(g=>g.Home===team||g.Away===team);
+ const next=mine[0];
+ const teams=table.map(t=>t.team);
+ const idx=new Map(teams.map((t,i)=>[t,i]));
  const win=pointValue('Points for a win',3),draw=pointValue('Points for a draw',1);
- const firstGame=myGames[0];
- let analysis={win:{out:0,tie:0,first:0},draw:{out:0,tie:0,first:0},loss:{out:0,tie:0,first:0}};
- let overall={out:0,tie:0,first:0};
- const winningPaths={win:new Map(),draw:new Map(),loss:new Map()};
- const chosen=Array(remaining.length).fill(null);
- // Exhaustive points-only enumeration, bounded to avoid blocking the browser.
- const enumerable=remaining.length<=11;
- if(enumerable){
-   function walk(n,pick){
-     if(n===remaining.length){
-       const mine=points[idx.get(team)];
-       const ahead=points.filter(p=>p>mine).length;
-       const level=points.filter(p=>p===mine).length;
-       // Team is through on points if every possible tiebreak position still qualifies.
-       const result=ahead>=qualifyingSlots?'out':ahead+level<=qualifyingSlots?'first':'tie';
-       overall[result]++;
-       if(firstGame){
-         analysis[pick][result]++;
-         if(result==='first'){
-           for(let j=0;j<remaining.length;j++){
-             if(remaining[j]===firstGame)continue;
-             const key=remaining[j].GameID;
-             if(!winningPaths[pick].has(key))winningPaths[pick].set(key,new Set());
-             winningPaths[pick].get(key).add(chosen[j]);
-           }
-         }
-       }
-       return;
-     }
-     const game=remaining[n],h=idx.get(game.Home),a=idx.get(game.Away);
-     if(h===undefined||a===undefined){walk(n+1,pick);return;}
-     for(const [hp,ap,what] of [[win,0,'win'],[draw,draw,'draw'],[0,win,'loss']]){
-       points[h]+=hp;points[a]+=ap;
-       chosen[n]=what;
-       const myChoice=game===firstGame?(game.Home===team?what:(what==='win'?'loss':what==='loss'?'win':'draw')):pick;
-       walk(n+1,myChoice);
-       points[h]-=hp;points[a]-=ap;
-       chosen[n]=null;
-     }
+ const points=table.map(t=>t.pts);
+ const slots=division==='BU13'&&pool?1:2;
+ const maxPoints=me.pts+mine.length*win;
+ const bucketsForRank=rank=>{
+   if(division==='BU13'){
+     return ['Final','2nd-place matchup','3rd-place matchup','4th-place matchup'][rank-1]||'Placement game';
    }
+   if(rank<=2)return 'Final';
+   if(rank<=4)return '3rd-place game';
+   if((division==='BU14'||division==='GU13')&&rank<=6)return '5th-place game';
+   if(division==='BU15')return 'Friendly';
+   return 'Placement crossover';
+ };
+ const outcomeNames=['win','draw','loss'];
+ const groups=Object.fromEntries(outcomeNames.map(k=>[k,{cases:0,slots:new Set(),guaranteedFinal:0,possibleFinal:0,unambiguousFinal:0,conditions:new Map()}]));
+ const allScenarios={cases:0,slots:new Set(),guaranteedFinal:0,possibleFinal:0};
+ const picks=new Array(remaining.length);
+ const maxCases=3**remaining.length;
+ const canCalculate=remaining.length<=11&&maxCases<=177147;
+ const evaluate=(pick)=>{
+   const p=points[idx.get(team)],ahead=points.filter(n=>n>p).length,equal=points.filter(n=>n===p).length;
+   const low=ahead+1,high=ahead+equal;
+   const finalPossible=low<=slots,finalGuaranteed=high<=slots;
+   const placements=new Set();
+   for(let rank=low;rank<=high;rank++)placements.add(bucketsForRank(rank));
+   for(const bucket of [allScenarios,next?groups[pick]:null].filter(Boolean)){
+     bucket.cases++;
+     placements.forEach(place=>bucket.slots.add(place));
+     if(finalPossible)bucket.possibleFinal++;
+     if(finalGuaranteed)bucket.guaranteedFinal++;
+     if(low===high&&finalGuaranteed)bucket.unambiguousFinal=(bucket.unambiguousFinal||0)+1;
+   }
+   if(next&&finalGuaranteed){
+     const b=groups[pick];
+     remaining.forEach((g,i)=>{
+       if(g===next)return;
+       const key=g.GameID,possible=b.conditions.get(key)||new Set();
+       possible.add(picks[i]);
+       b.conditions.set(key,possible);
+     });
+   }
+ };
+ if(canCalculate){
+   const walk=(i,pick)=>{
+     if(i===remaining.length){evaluate(pick);return;}
+     const g=remaining[i],h=idx.get(g.Home),a=idx.get(g.Away);
+     if(h===undefined||a===undefined){picks[i]=null;walk(i+1,pick);return;}
+     for(const [hp,ap,result] of [[win,0,'win'],[draw,draw,'draw'],[0,win,'loss']]){
+       points[h]+=hp;points[a]+=ap;picks[i]=result;
+       const mineChoice=g===next?(g.Home===team?result:result==='win'?'loss':result==='loss'?'win':'draw'):pick;
+       walk(i+1,mineChoice);
+       points[h]-=hp;points[a]-=ap;
+     }
+   };
    walk(0,null);
  }
- const requiredOthers=pick=>{
-   if(!analysis[pick]?.first)return '';
-   const conditions=[];
-   for(const g of remaining){
-     if(g===firstGame)continue;
-     const outcomes=winningPaths[pick].get(g.GameID);
-     if(!outcomes||outcomes.size===3)continue;
-     let text='';
-     const home=esc(g.Home),away=esc(g.Away);
-     if(outcomes.size===1){
-       const only=[...outcomes][0];
-       text=only==='win'?home+' must beat '+away:only==='loss'?away+' must beat '+home:home+' and '+away+' must draw';
-     }else if(outcomes.has('win')&&outcomes.has('draw'))text=home+' must avoid losing to '+away;
-     else if(outcomes.has('loss')&&outcomes.has('draw'))text=away+' must avoid losing to '+home;
-     else text=home+' vs '+away+' must not be a draw';
-     conditions.push(text);
+ const currentPlacement=()=> {
+   const ahead=table.filter(t=>t.pts>me.pts).length;
+   const tied=table.filter(t=>t.pts===me.pts).length;
+   const names=new Set();
+   for(let r=ahead+1;r<=ahead+tied;r++)names.add(bucketsForRank(r));
+   return [...names];
+ };
+ const formatPlaces=places=>places.join(' / ');
+ const verdict=()=>{
+   if(!canCalculate)return 'Your Sunday matchup is still being decided';
+   if(allScenarios.guaranteedFinal===allScenarios.cases)return 'Final spot secured on points';
+   if(!remaining.length){
+     if(allScenarios.possibleFinal===allScenarios.cases)return 'Final place depends on a tiebreaker';
+     return 'Group play complete · placement pending';
    }
-   return conditions.length?'<span class="advance-required">Other result'+(conditions.length===1?'':'s')+' needed: '+conditions.slice(0,3).join('; ')+(conditions.length>3?'; plus additional results':'')+'</span>':'';
+   if(allScenarios.possibleFinal>0)return 'Still in the race for the final';
+   return 'Playing for a placement matchup';
  };
- const stateText=a=>{
-   if(!a||a.first+a.tie+a.out===0)return 'Not available';
-   if(a.first>0&&a.tie===0&&a.out===0)return 'Qualifies on points';
-   if(a.first===0&&a.tie>0&&a.out===0)return 'Tied at cutoff · tiebreak needed';
-   if(a.first===0&&a.tie===0)return 'Cannot qualify on points';
-   if(a.out===0)return 'At least tied for a final spot';
-   if(a.first===0&&a.tie>0)return 'Needs a tiebreak and other results';
-   return 'Can qualify · other results matter';
+ const outcomeText=b=>{
+   if(!b.cases)return 'No scenario data';
+   if(b.guaranteedFinal===b.cases)return 'Final secured';
+   if(b.possibleFinal>0){
+     return b.guaranteedFinal>0?'Final possible — other scores matter':'Final possible — tiebreak or other scores needed';
+   }
+   return 'Possible: '+formatPlaces([...b.slots]);
  };
- let verdict='',tone='watch';
- if(!remaining.length){
-   const ahead=table.filter(x=>x.pts>me.pts).length,level=table.filter(x=>x.pts===me.pts).length;
-   verdict=ahead>=qualifyingSlots?'Group play finished · outside final places on points':
-     ahead+level<=qualifyingSlots?'In a qualifying position on points':
-     'Tied at the qualification cutoff · official tiebreak needed';
-   tone=ahead+level<=qualifyingSlots?'strong':ahead>=qualifyingSlots?'quiet':'watch';
- }else if(enumerable){
-   if(overall.first>0&&overall.out===0&&overall.tie===0){verdict='Final spot secured on points';tone='strong';}
-   else if(overall.first===0&&overall.tie===0){verdict='Cannot qualify on points';tone='quiet';}
-   else if(overall.out===0&&overall.first===0){verdict='Can finish tied at qualification cutoff';}
-   else if(overall.out===0){verdict='Guaranteed at least a tie for a final spot';tone='strong';}
-   else if(overall.first>0){verdict='Still in contention for the final';}
-   else {verdict='Needs results and a tiebreak to advance';}
- }else verdict='Final qualification depends on remaining group results';
- const rivals=table.filter(x=>x.team!==team).slice().sort((a,b)=>{
-   const ax=a.pts+remaining.filter(g=>g.Home===a.team||g.Away===a.team).length*win;
-   const bx=b.pts+remaining.filter(g=>g.Home===b.team||g.Away===b.team).length*win;
-   return bx-ax;
- }).slice(0,3);
- const future=remaining.filter(g=>g.Home!==team&&g.Away!==team).slice(0,3);
- const heading=qualifyingSlots===1?'Pool '+pool+' winner advances to the BU13 final':'Top two teams advance to the '+division+' final';
- const scenario=firstGame&&enumerable?'<div class="advance-scenarios"><p class="advance-subtitle">Your next match: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p><div class="advance-outcomes">'+
-   [['win','Win'],['draw','Draw'],['loss','Loss']].map(([k,label])=>'<div><span class="outcome-tag '+k+'">'+label+'</span><strong>'+esc(stateText(analysis[k]))+'</strong>'+requiredOthers(k)+'</div>').join('')+'</div></div>':
- firstGame?'<p class="advance-subtitle">Next: '+esc(firstGame.Home===team?firstGame.Away:firstGame.Home)+' · '+esc(firstGame.Day)+' '+esc(firstGame.Time)+'</p>':'';
- const rivalsHtml=rivals.length?'<div class="advance-rivals"><p class="advance-subtitle">Teams to watch</p><div class="advance-rival-grid">'+rivals.map(t=>{
-   const left=remaining.filter(g=>g.Home===t.team||g.Away===t.team).length;
-   return '<div><strong>'+esc(t.team)+'</strong><span>'+t.pts+' pts · '+left+' group '+(left===1?'match':'matches')+' left</span></div>';
- }).join('')+'</div></div>':'';
- const watch=future.length?'<p class="advance-watch">Other relevant group games: '+future.map(g=>esc(g.Home)+' vs '+esc(g.Away)).join(' · ')+'</p>':'';
- return '<section class="advancement-panel"><div class="advancement-head"><div><p class="kicker">ROAD TO THE FINAL</p><h4>Advancement outlook</h4></div><span class="advance-label">POINTS-BASED SCENARIOS</span></div>'+
- '<div class="advancement-body"><div class="advance-verdict '+tone+'">'+esc(verdict)+'</div>'+
- '<p class="advance-description">'+esc(heading)+'. '+esc(team)+' currently has <strong>'+me.pts+' points</strong> with <strong>'+myGames.length+'</strong> group '+(myGames.length===1?'match':'matches')+' remaining; maximum <strong>'+maxPoints+' points</strong>.</p>'+
- scenario+rivalsHtml+watch+
- '<details class="advance-rules"><summary>How do tiebreakers work?</summary><p>Group games award '+win+' points for a win, '+draw+' for a draw and zero for a loss. Standings currently use the working order <strong>'+esc(rules||'PTS, H2H, GD, GA, GF')+'</strong> (points, head-to-head, goal differential, goals against, goals for). <strong>This order is provisional and has not been confirmed by tournament staff.</strong> Head-to-head for multi-team ties and any goal caps also need confirmation.</p></details>'+
- '<p class="advance-caution">Scenarios check win/draw/loss points combinations for remaining group matches, not exact scorelines. Any tie at the qualifying cutoff remains undecided until official tiebreakers are applied. Standings and final placements must be confirmed by tournament staff.</p>'+
+ const conditionsText=b=>{
+   if(!b.guaranteedFinal||!next)return '';
+   const necessary=[];
+   for(const g of remaining){
+     if(g===next)continue;
+     const values=b.conditions.get(g.GameID);
+     if(!values||values.size===3)continue;
+     const home=esc(g.Home),away=esc(g.Away);
+     if(values.size===1){
+       const v=[...values][0];
+       necessary.push(v==='win'?home+' beats '+away:v==='loss'?away+' beats '+home:home+' draws '+away);
+     }else if(values.has('win')&&values.has('draw'))necessary.push(home+' avoids losing to '+away);
+     else if(values.has('loss')&&values.has('draw'))necessary.push(away+' avoids losing to '+home);
+     else necessary.push(home+' vs '+away+' does not end in a draw');
+   }
+   return necessary.length?'<span class="advance-required">For a guaranteed final spot on points: '+necessary.slice(0,2).join('; ')+(necessary.length>2?'; plus other results':'')+'</span>':'';
+ };
+ const possible=[...allScenarios.slots];
+ const rankedLabel=division==='BU13'?'Pool '+pool+' #1 → Final · #2 → 2nd-place matchup · #3 → 3rd-place matchup · #4 → 4th-place matchup':'#1–2 → Final · #3–4 → 3rd-place game · '+((division==='BU14'||division==='GU13')?'#5–6 → 5th-place game':division==='BU15'?'#5 → Friendly':'#5 → Placement crossover');
+ const possibleText=canCalculate?formatPlaces(possible):formatPlaces(currentPlacement())+' (current positions)';
+ const nextLine=next?'Next: '+esc(next.Home===team?next.Away:next.Home)+' · '+esc(next.Day)+' '+esc(next.Time):'No group matches remaining';
+ const scenarioHtml=next&&canCalculate?'<div class="advance-scenarios"><p class="advance-subtitle">'+nextLine+'</p><div class="advance-outcomes">'+
+   outcomeNames.map(key=>{
+     const b=groups[key],label=key.charAt(0).toUpperCase()+key.slice(1);
+     const extra=b.slots.size>1?'<span class="advance-possibilities">Sunday possibilities: '+formatPlaces([...b.slots])+'</span>':'';
+     return '<div><span class="outcome-tag '+key+'">'+label+'</span><strong>'+esc(outcomeText(b))+'</strong>'+extra+conditionsText(b)+'</div>';
+   }).join('')+'</div></div>':
+ '<p class="advance-subtitle">'+nextLine+'</p>';
+ const other=remaining.filter(g=>g.Home!==team&&g.Away!==team).slice(0,3);
+ const watch=other.length?'<div class="advance-watch"><strong>Other games that can affect your placement</strong><p>'+other.map(g=>esc(g.Home)+' vs '+esc(g.Away)+' ('+esc(g.Day)+' '+esc(g.Time)+')').join(' · ')+'</p></div>':'';
+ return '<section class="advancement-panel"><div class="advancement-head"><div><p class="kicker">YOUR PATH TO SUNDAY</p><h4>Which game can we reach?</h4></div><span class="advance-label">LIVE PLACEMENT OUTLOOK</span></div>'+
+ '<div class="advancement-body"><div class="advance-verdict">'+esc(verdict())+'</div>'+
+ '<p class="advance-description"><strong>'+esc(team)+'</strong> · '+me.pts+' points · '+mine.length+' group '+(mine.length===1?'game':'games')+' left · Maximum '+maxPoints+' points.</p>'+
+ '<div class="advance-summary"><span>YOUR POSSIBLE SUNDAY GAMES</span><strong>'+esc(possibleText)+'</strong><small>'+esc(rankedLabel)+'</small></div>'+
+ scenarioHtml+watch+
+ '<details class="advance-rules"><summary>What if teams finish tied on points?</summary><p>Group games award '+win+' points for a win and '+draw+' for a draw. The sheet currently lists <strong>'+esc(setting('Tiebreakers')||'PTS, H2H, GD, GA, GF')+'</strong>, but explicitly says the order is a placeholder pending tournament confirmation. Scenarios do not assume a winner of an unresolved tiebreak.</p></details>'+
+ '<p class="advance-caution">These are points-based possibilities, not official placements. A Sunday game is only guaranteed when all remaining points scenarios lead there. Exact score margins and unconfirmed tiebreakers may change outcomes. Tournament staff makes final assignments.</p>'+
  '</div></section>';
 }
-
 function renderTeamProfile(){
  const profile=state.selectedTeam;
  if(!profile||!state.payload)return;
